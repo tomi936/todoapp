@@ -1,0 +1,93 @@
+version: "3.7"
+
+services:
+  apigateway:
+    image: traefik:v1.7.12
+    ports:
+      - "5080:80"
+      - "5088:8080"
+    command:
+      - --api
+      - --docker
+      - --docker.exposedbydefault=false
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # So that Traefik can listen to the Docker events (see .env file for Windows workaround to make this work)
+    networks:
+      - todoapp-network
+
+  todos:
+    image: "${REGISTRY_URL:-todoapp}/todos:${IMAGE_TAG:-latest}"
+    build:
+      context: ..
+      dockerfile: Todos/Todos.Api/Dockerfile
+    networks:
+      - todoapp-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=todos"
+      - "traefik.port=80"
+      - "traefik.protocol=http"
+      - "traefik.frontend.passHostHeader=true"
+      - "traefik.frontend.rule=PathPrefix:/api/todos"
+
+  web:
+    image: "${REGISTRY_URL:-todoapp}/web:${IMAGE_TAG:-latest}"
+    build:
+      context: ..
+      dockerfile: Web/Docker/Dockerfile
+    networks:
+      - todoapp-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=web"
+      - "traefik.port=80"
+      - "traefik.protocol=http"
+      - "traefik.web.frontend.rule=PathPrefix:/"
+
+  users:
+    image: "${REGISTRY_URL:-todoapp}/users:${IMAGE_TAG:-latest}"
+    build:
+      context: ..
+      dockerfile: Users/Docker/Dockerfile
+    networks:
+      - todoapp-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=users"
+      - "traefik.port=80"
+      - "traefik.protocol=http"
+      - "traefik.web.frontend.rule=PathPrefix:/api/users"
+
+  mongodb:
+    image: mongo:4.0.10
+    networks:
+      - todoapp-network
+    volumes:
+      - todoapp-mongo-data:/data/db
+
+  redis:
+    image: redis:5.0.5-alpine
+    networks:
+      - todoapp-network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.3.0
+    environment:
+      - cluster.name=elasticsearch
+      - node.name=elasticsearch
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
+    volumes:
+      - todoapp-elastic-data:/usr/share/elasticsearch/data
+    networks:
+      - todoapp-network
+
+volumes:
+  todoapp-mongo-data:
+    driver: local
+  todoapp-elastic-data:
+    driver: local
+
+networks:
+  todoapp-network:
+    driver: bridge
