@@ -29,6 +29,7 @@ services:
       - "traefik.protocol=http"
       - "traefik.frontend.passHostHeader=true"
       - "traefik.frontend.rule=PathPrefix:/api/todos"
+      - "traefik.frontend.auth.forward.address=http://users/api/auth"
 
   web:
     image: "${REGISTRY_URL:-todoapp}/web:${IMAGE_TAG:-latest}"
@@ -56,7 +57,9 @@ services:
       - "traefik.backend=users"
       - "traefik.port=80"
       - "traefik.protocol=http"
-      - "traefik.web.frontend.rule=PathPrefix:/api/users"
+      - "traefik.auth.frontend.rule=PathPrefix:/api/auth"
+      - "traefik.api.frontend.rule=PathPrefix:/api/users"
+      - "traefik.api.frontend.auth.forward.address=http://users/api/auth"
 
   mongodb:
     image: mongo:4.0.10

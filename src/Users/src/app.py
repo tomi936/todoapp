@@ -35,7 +35,7 @@ def get_user(id):
         return make_response(jsonify({'error': 'Not found'}), 404)
 
 
-# Decide if the particual call is authenticated; used by forward authentication
+# Decide if the caller is authenticated; used by forward authentication
 @app.route("/api/auth")
 def get_is_auth():
     # return make_response(jsonify({'error': 'Unauthorized'}), 401)
