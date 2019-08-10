@@ -50,7 +50,7 @@ namespace Todos.Api.Controllers
         public async Task<ActionResult<TodoItem>> Post([FromBody] CreateNewTodoRequest value)
         {
             var result = await repository.Insert(value);
-            return CreatedAtAction(nameof(Get), result);
+            return CreatedAtAction(nameof(Get), new { id = result.Id }, result);
         }
 
         [HttpPut("{id}")]
@@ -62,7 +62,7 @@ namespace Todos.Api.Controllers
             if (result != null)
             {
                 await cache.Invalidate(id);
-                return AcceptedAtAction(nameof(Get), result);
+                return AcceptedAtAction(nameof(Get), new { id }, result);
             }
             else
             {
