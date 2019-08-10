@@ -23,28 +23,19 @@ namespace Todos.Api.Controllers
         [HttpGet]
         public async Task<SearchTodoResult> Search([FromQuery] int? userId = null, [FromQuery] string searchExpression = null)
         {
-            var result = await repository.Search(userId, searchExpression);
-
-            foreach (var todoItem in result.Items)
-                await cache.Set(todoItem);
-
-            return result;
+            // TODO 4. feladat
+            return new SearchTodoResult(
+                new[] { new TodoItem("a", 1, "Test item", false) },
+                5);
         }
 
         [HttpGet("{id}")]
-        public async Task<TodoItem> Get(string id)
+        [ProducesResponseType(200)]
+        [ProducesResponseType(404)]
+        public async Task<ActionResult<TodoItem>> Get(string id)
         {
-            var cachedValue = await cache.TryGet(id);
-            if (cachedValue != null)
-            {
-                return cachedValue;
-            }
-            else
-            {
-                var value = await repository.FindById(id);
-                await cache.Set(value);
-                return value;
-            }
+            // TODO 4. feladat
+            return NotFound();
         }
 
         [HttpPost]

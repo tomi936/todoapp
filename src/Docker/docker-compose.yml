@@ -1,19 +1,21 @@
 version: "3.7"
 
 services:
-  apigateway:
-    image: traefik:v1.7.12
-    ports:
-      - "5080:80" # Port of the API Gaetway, which will be the port behind which the system will be published
-      - "5088:8080" # Dashboard of Traefik for troubleshooting
-    command:
-      - --api
-      - --docker
-      - --docker.exposedbydefault=false
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock # So that Traefik can listen to the Docker events (see .env file for Windows workaround to make this work)
-    networks:
-      - todoapp-network
+
+  # TODO 5. feladat
+  # apigateway:
+  #   image: traefik:v1.7.12
+  #   ports:
+  #     - "5080:80" # Port of the API Gaetway, which will be the port behind which the system will be published
+  #     - "5088:8080" # Dashboard of Traefik for troubleshooting
+  #   command:
+  #     - --api
+  #     - --docker
+  #     - --docker.exposedbydefault=false
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock # So that Traefik can listen to the Docker events (see .env file for Windows workaround to make this work)
+  #   networks:
+  #     - todoapp-network
 
   todos:
     image: "${REGISTRY_URL:-todoapp}/todos:${IMAGE_TAG:-latest}"
@@ -60,12 +62,13 @@ services:
       - "traefik.api.frontend.rule=PathPrefix:/api/users" # This other rule works on a different url scheme, and requires authentication
       - "traefik.api.frontend.auth.forward.address=http://users/api/auth"
 
+  # TODO 3. feladat
   mongodb:
-    image: mongo:4.0.10
-    networks:
-      - todoapp-network
-    volumes:
-      - todoapp-mongo-data:/data/db
+    image: hello-world
+  #   networks:
+  #     - todoapp-network
+  #   volumes:
+  #     - todoapp-mongo-data:/data/db
 
   redis:
     image: redis:5.0.5-alpine

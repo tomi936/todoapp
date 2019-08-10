@@ -22,29 +22,22 @@ if is_development:
 @app.route("/api/users")
 @cross_origin()
 def get_all_users():
-    users_collection = mongo.todoapp.users
-    output = []
-    for u in users_collection.find():
-        output.append({'name': u['name'], 'id': u['id']})
-    return jsonify(output)
+    # TODO 3. feladat
+    return jsonify( { [ {'name': 'name', 'id': 1} ] } )
 
 
 # Get a particular user
 @app.route("/api/users/<int:id>")
 @cross_origin()
 def get_user(id):
-    users_collection = mongo.todoapp.users
-    u = users_collection.find_one({'id': id})
-    if u:
-        output = {'name': u['name'], 'id': u['id']}
-        return jsonify(output)
-    else:
-        return make_response(jsonify({'error': 'Not found'}), 404)
+    # TODO 3. feladat
+    return make_response(jsonify({'error': 'Not found'}), 404)
 
 
 # Decide if the caller is authenticated; used by forward authentication
 @app.route("/api/auth")
 def get_is_auth():
+    # TODO 6. feladat
     # return make_response(jsonify({'error': 'Unauthorized'}), 401)
     return make_response(jsonify({'auth': 'ok'}), 200)
 

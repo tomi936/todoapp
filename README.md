@@ -13,7 +13,15 @@ Az alkalmazás teljes egészében platformfüggetlen. A kényelmes fejlesztéshe
   - [Volume sharing](https://docs.microsoft.com/en-us/visualstudio/containers/troubleshooting-docker-errors?view=vs-2019#volume-sharing-is-not-enabled-enable-volume-sharing-in-the-docker-ce-for-windows-settings--linux-containers-only) engedélyezve
   - Minimum 2 GB memória allokálva a Docker-nek
 - NPM és YARN (path-ban elérhető)
+  - Csak akkor szükséges, ha a fronted kódban fejleszteni szeretnénk
+- Postman
 - 8 GB RAM
+
+## Feladatok
+
+A `master` ág állapotából kiindulva kövessük a [feladatokat](feladatok.md).
+
+A kész megoldás elérhető a `megoldas` nevű ágon.
 
 ## Rendszer felépítése
 
@@ -21,7 +29,7 @@ A rendszer az alábbi mikroszolgáltatásokból épül fel:
 
 - _todos_: A teendőket kezelő alkalmazás, ASP.NET Core platformon, REST API-t biztosítva. Elasticsearch adatbázist és Redis cache-t használ.
 - _web_: React-ra épülő SPA webalkalmazás TypeScript-ben, NGINX webszerverrel kiszolgálva.
-- _users_: Felhasználókat kezelő alkalmazás Python-ban, MongoDB adatbázisra épüéve REST API-t biztosít.
+- _users_: Felhasználókat kezelő alkalmazás Python-ban, MongoDB adatbázisra épülve REST API-t biztosít.
 
 ```
                    +----+     +-------+     +---------+
