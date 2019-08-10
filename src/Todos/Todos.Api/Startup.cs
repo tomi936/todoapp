@@ -8,12 +8,14 @@ namespace Todos.Api
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IHostingEnvironment hostingEnvironment)
         {
             Configuration = configuration;
+            HostingEnvironment = hostingEnvironment;
         }
 
         public IConfiguration Configuration { get; }
+        public IHostingEnvironment HostingEnvironment { get; }
 
         public void ConfigureServices(IServiceCollection services)
         {
@@ -21,13 +23,16 @@ namespace Todos.Api
 
             services.AddTodosDal(this.Configuration);
             services.AddTodosCache(this.Configuration);
+
+            if (HostingEnvironment.IsDevelopment())
+                services.AddHostedService<TestDataProvider>();
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             if (env.IsDevelopment())
             {
-                app.UseCors(config => config.AllowAnyOrigin());
+                app.UseCors(config => config.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
             }
             else
             {

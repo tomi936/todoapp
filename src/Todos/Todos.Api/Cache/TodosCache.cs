@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Todos.Api.Cache
@@ -9,7 +8,6 @@ namespace Todos.Api.Cache
     {
         private readonly IDistributedCache cache;
         private readonly DistributedCacheEntryOptions cacheEntryOptions;
-        private const string cacheKey = "todos-search-result";
 
         public TodosCache(IDistributedCache cache)
         {
@@ -17,22 +15,24 @@ namespace Todos.Api.Cache
             this.cacheEntryOptions = new DistributedCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromMinutes(1));
         }
 
-        public Task Invalidate()
-            => cache.RemoveAsync(cacheKey);
 
-        public async Task<IReadOnlyList<TodoItem>> TryGet()
+        public async Task<TodoItem> TryGet(string todoItemId)
         {
-            var cachedValue = await cache.GetStringAsync(cacheKey);
-            if (cachedValue == null)
+            var cacheItem = await cache.GetStringAsync(getCacheKey(todoItemId));
+            if (cacheItem == null)
                 return null;
             else
-                return Newtonsoft.Json.JsonConvert.DeserializeObject<IReadOnlyList<TodoItem>>(cachedValue);
+                return Newtonsoft.Json.JsonConvert.DeserializeObject<TodoItem>(cacheItem);
         }
 
-        public async Task Set(IReadOnlyList<TodoItem> value)
+        public async Task Set(TodoItem value)
         {
             var valueAsString = Newtonsoft.Json.JsonConvert.SerializeObject(value);
-            await cache.SetStringAsync(cacheKey, valueAsString, cacheEntryOptions);
+            await cache.SetStringAsync(key: getCacheKey(value.Id), value: valueAsString, options: cacheEntryOptions);
         }
+
+        public Task Invalidate(string todoItemId) => cache.RemoveAsync(getCacheKey(todoItemId));
+
+        private string getCacheKey(string todoItemId) => $"todos-{todoItemId}";
     }
 }

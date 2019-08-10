@@ -2,6 +2,7 @@ import fetch from "cross-fetch";
 import { Dispatch } from "react";
 import { ITodo } from "../model/todo";
 import { IUser } from "../model/user";
+import { ISearchTodoResponse } from "../model/searchTodoResponse";
 
 export const REQUEST_USERS = "REQUEST_USERS";
 function requestUsers(): IRequestUsersAction {
@@ -38,17 +39,56 @@ interface IRequestTodosAction {
 }
 
 export const RECEIVE_TODOS = "RECEIVE_TODOS";
-function receiveTodos(todos: ITodo[]): IReceiveTodoAction {
+function receiveTodos(response: ISearchTodoResponse): IReceiveTodoAction {
   return {
     receivedAt: new Date(),
-    todos,
+    todos: response.items,
+    todoCount: response.count,
     type: RECEIVE_TODOS
   };
 }
 interface IReceiveTodoAction {
   type: typeof RECEIVE_TODOS;
   todos: ITodo[];
+  todoCount: number;
   receivedAt: Date;
+}
+
+export const SHOW_SEARCH_TODO_MODAL = "SHOW_SEARCH_TODO_MODAL";
+export function showSearchTodoModal(): IShowSearchTodoModalAction {
+  return {
+    type: SHOW_SEARCH_TODO_MODAL
+  };
+}
+interface IShowSearchTodoModalAction {
+  type: typeof SHOW_SEARCH_TODO_MODAL;
+}
+
+export const CLOSE_SEARCH_TODO_MODAL = "CLOSE_SEARCH_TODO_MODAL";
+export function closeSearchTodoModal(): ICloseSearchTodoModalAction {
+  return {
+    type: CLOSE_SEARCH_TODO_MODAL
+  };
+}
+interface ICloseSearchTodoModalAction {
+  type: typeof CLOSE_SEARCH_TODO_MODAL;
+}
+
+export const UPDATE_PENDING_SEARCH = "UPDATE_PENDING_SEARCH";
+export function updatePendingSearch(
+  userId: number | undefined,
+  text: string
+): IUpdatePendingSearchAction {
+  return {
+    text,
+    type: UPDATE_PENDING_SEARCH,
+    userId
+  };
+}
+interface IUpdatePendingSearchAction {
+  type: typeof UPDATE_PENDING_SEARCH;
+  userId: number | undefined;
+  text: string;
 }
 
 export const SHOW_ADD_TODO_MODAL = "SHOW_ADD_TODO_MODAL";
@@ -110,18 +150,6 @@ interface IEndPostTodoAction {
   todo: ITodo;
 }
 
-export const SELECT_USER = "SELECT_USER";
-export function selectUser(user: number): ISelectUserAction {
-  return {
-    type: SELECT_USER,
-    user
-  };
-}
-interface ISelectUserAction {
-  type: typeof SELECT_USER;
-  user: number;
-}
-
 export const START_MODIFY_TODO = "START_MODIFY_TODO";
 function startModifyTodo(id: string): IStartModifyTodoAction {
   return {
@@ -163,12 +191,14 @@ export type ITodoAction =
   | IReceiveUserAction
   | IRequestTodosAction
   | IReceiveTodoAction
+  | IShowSearchTodoModalAction
+  | ICloseSearchTodoModalAction
+  | IUpdatePendingSearchAction
   | IShowAddTodoModalAction
   | ICloseAddTodoModalAction
   | IUpdatePendingTodoAction
   | IStartPostTodoAction
   | IEndPostTodoAction
-  | ISelectUserAction
   | IStartModifyTodoAction
   | IEndModifyTodoAction
   | IEndDeleteTodoAction;
@@ -212,7 +242,10 @@ export function fetchUsers() {
   };
 }
 
-export function fetchTodos() {
+export function fetchTodos(
+  userId: number | undefined,
+  searchExpression: string | undefined
+) {
   // Thunk middleware knows how to handle functions.
   // It passes the dispatch method as an argument to the function,
   // thus making it able to dispatch actions itself.
@@ -229,7 +262,23 @@ export function fetchTodos() {
     // In this case, we return a promise to wait for.
     // This is not required by thunk middleware, but it is convenient for us.
 
-    return fetch(`/api/todos`)
+    var queryString = "/api/todos";
+    if (userId && searchExpression) {
+      queryString =
+        queryString +
+        `?userId=${encodeURIComponent(
+          userId.toString()
+        )}&searchExpression=${encodeURIComponent(searchExpression)}`;
+    } else if (userId) {
+      queryString =
+        queryString + `?userId=${encodeURIComponent(userId.toString())}`;
+    } else if (searchExpression) {
+      queryString =
+        queryString +
+        `?searchExpression=${encodeURIComponent(searchExpression)}`;
+    }
+
+    return fetch(queryString)
       .then(
         response => response.json(),
         // Do not use catch, because that will also catch

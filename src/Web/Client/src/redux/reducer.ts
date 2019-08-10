@@ -7,13 +7,15 @@ import {
   REQUEST_TODOS,
   RECEIVE_USERS,
   REQUEST_USERS,
-  SELECT_USER,
   SHOW_ADD_TODO_MODAL,
   START_POST_TODO,
   UPDATE_PENDING_TODO,
   START_MODIFY_TODO,
   END_MODIFY_TODO,
-  END_DELETE_TODO
+  END_DELETE_TODO,
+  SHOW_SEARCH_TODO_MODAL,
+  CLOSE_SEARCH_TODO_MODAL,
+  UPDATE_PENDING_SEARCH
 } from "./actions";
 import { IUser } from "../model/user";
 
@@ -22,10 +24,13 @@ export interface ITodoState {
   isFetchingUsers: boolean;
   lastUpdated: Date;
   todos: ITodo[];
+  todoCount: number;
   users: IUser[];
-  selectedUser: number;
   showAddTodoModal: boolean;
+  showSearchTodoModal: boolean;
   pendingTodo: ITodo;
+  searchUserId: number | undefined;
+  searchText: string;
 }
 
 const emptyPendingTodo = {
@@ -42,10 +47,13 @@ const initialState = {
   isFetchingUsers: false,
   lastUpdated: new Date(0),
   pendingTodo: emptyPendingTodo,
-  selectedUser: 1,
   showAddTodoModal: false,
+  showSearchTodoModal: false,
   todos: [],
-  users: []
+  todoCount: 0,
+  users: [],
+  searchUserId: undefined,
+  searchText: ""
 };
 
 export function todos(state: ITodoState = initialState, action: ITodoAction) {
@@ -65,14 +73,32 @@ export function todos(state: ITodoState = initialState, action: ITodoAction) {
     case REQUEST_TODOS:
       return {
         ...state,
-        isFetchingTodos: true
+        isFetchingTodos: true,
+        showSearchTodoModal: false
       };
     case RECEIVE_TODOS:
       return {
         ...state,
         isFetchingTodos: false,
         lastUpdated: action.receivedAt,
-        todos: action.todos
+        todos: action.todos,
+        todoCount: action.todoCount
+      };
+    case SHOW_SEARCH_TODO_MODAL:
+      return {
+        ...state,
+        showSearchTodoModal: true
+      };
+    case CLOSE_SEARCH_TODO_MODAL:
+      return {
+        ...state,
+        showSearchTodoModal: false
+      };
+    case UPDATE_PENDING_SEARCH:
+      return {
+        ...state,
+        searchUserId: action.userId,
+        searchText: action.text
       };
     case SHOW_ADD_TODO_MODAL:
       return {
@@ -104,8 +130,7 @@ export function todos(state: ITodoState = initialState, action: ITodoAction) {
         ...state,
         isFetchingTodos: false,
         pendingTodo: {
-          ...emptyPendingTodo,
-          userId: state.selectedUser
+          ...emptyPendingTodo
         },
         todos: state.todos.concat([
           {
@@ -113,15 +138,6 @@ export function todos(state: ITodoState = initialState, action: ITodoAction) {
             local: true
           }
         ])
-      };
-    case SELECT_USER:
-      return {
-        ...state,
-        pendingTodo: {
-          ...state.pendingTodo,
-          userId: action.user
-        },
-        selectedUser: action.user
       };
     case START_MODIFY_TODO:
       const changingTodo = state.todos.find(todo => todo.id === action.id);

@@ -1,7 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using Nest;
 using System.Linq;
 using System.Threading.Tasks;
-using Nest;
 
 namespace Todos.Dal
 {
@@ -14,10 +13,34 @@ namespace Todos.Dal
             this.elasticClient = elasticClient;
         }
 
-        public async Task<IReadOnlyList<TodoItem>> ListAll()
+        public async Task<SearchTodoResult> Search(int? userId = null, string searchExpression = null)
         {
-            var result = await elasticClient.SearchAsync<Entities.TodoItem>();
-            return result.Hits.Select(i => i.Source.ToDomain(i.Id)).ToList();
+            var result = await elasticClient
+                                .SearchAsync<Entities.TodoItem>(searchDescriptor =>
+                                    searchDescriptor
+                                    .Query(queryDescriptor => filterForUserId(userId, queryDescriptor) && filterForText(searchExpression, queryDescriptor))
+                                    .Size(5));
+
+            return new SearchTodoResult(
+                items: result.Hits.Select(i => i.Source.ToDomain(i.Id)).ToList(),
+                count: result.Total
+                );
+        }
+
+        private static QueryContainer filterForText(string searchExpression, QueryContainerDescriptor<Entities.TodoItem> queryDescriptor)
+        {
+            if (string.IsNullOrEmpty(searchExpression))
+                return queryDescriptor.MatchAll();
+            else
+                return queryDescriptor.Match(match => match.Field(f => f.Title).Query(searchExpression));
+        }
+
+        private static QueryContainer filterForUserId(int? userId, QueryContainerDescriptor<Entities.TodoItem> queryDescriptor)
+        {
+            if (userId == null)
+                return queryDescriptor.MatchAll();
+            else
+                return queryDescriptor.Term(term => term.Field(f => f.UserId).Value(userId.Value));
         }
 
         public async Task<TodoItem> FindById(string id)

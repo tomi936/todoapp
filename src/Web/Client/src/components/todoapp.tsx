@@ -1,7 +1,6 @@
-import React, { Component, Dispatch } from "react";
+import React, { Component } from "react";
 import Button from "react-bootstrap/Button";
 import Navbar from "react-bootstrap/Navbar";
-import Pagination from "react-bootstrap/Pagination";
 import Spinner from "react-bootstrap/Spinner";
 import Table from "react-bootstrap/Table";
 import { connect } from "react-redux";
@@ -9,56 +8,42 @@ import { ThunkDispatch } from "redux-thunk";
 import { ITodo } from "../model/todo";
 import {
   ITodoAction,
-  selectUser,
   showAddTodoModal,
   modifyTodo,
-  deleteTodo
+  deleteTodo,
+  showSearchTodoModal
 } from "../redux/actions";
 import { ITodoState } from "../redux/reducer";
 import AddTodoModal from "./addtodomodal";
 import { TodoRow } from "./todorow";
 import { IUser } from "../model/user";
+import SearchTodoModal from "./searchtodomodal";
 
 interface ITodoAppProps {
   isFetchingTodos: boolean;
   isFetchingUsers: boolean;
   todos: ITodo[];
+  todoCount: number;
   users: IUser[];
-  selectedUser: number;
   dispatch: ThunkDispatch<ITodoState, undefined, ITodoAction>;
 }
 
 class TodoApp extends Component<ITodoAppProps> {
   public render() {
-    const todos = this.props.todos.filter(
-      todo => todo.userId === this.props.selectedUser
-    );
-    todos.sort((a, b) => b.id.localeCompare(a.id));
+    const todos = this.props.todos;
 
-    const todoItems = todos.map(todo => (
-      <TodoRow
-        key={todo.id}
-        todo={todo}
-        onTodoModified={this.onTodoModified}
-        onTodoDeleted={this.onTodoDeleted}
-      />
-    ));
-
-    const users = this.props.users;
-
-    const pages =
-      users &&
-      users.map(user => (
-        <Pagination.Item
-          key={user.id}
-          active={user.id === this.props.selectedUser}
-          onClick={() => this.selectPage(user.id)}
-        >
-          {user.name}
-        </Pagination.Item>
+    const todoItems =
+      todos &&
+      todos.map(todo => (
+        <TodoRow
+          key={todo.id}
+          todo={todo}
+          onTodoModified={this.onTodoModified}
+          onTodoDeleted={this.onTodoDeleted}
+        />
       ));
 
-    const buttonContent = this.props.isFetchingTodos ? (
+    const addButtonContent = this.props.isFetchingTodos ? (
       <div>
         <Spinner
           as="span"
@@ -67,13 +52,13 @@ class TodoApp extends Component<ITodoAppProps> {
           role="status"
           aria-hidden="true"
         />
-        Loading todos...
+        Loading data...
       </div>
     ) : (
       <span>Add new Todo</span>
     );
 
-    const navbarContent = this.props.isFetchingUsers ? (
+    const searchButtonContent = this.props.isFetchingUsers ? (
       <div>
         <Spinner
           as="span"
@@ -82,10 +67,10 @@ class TodoApp extends Component<ITodoAppProps> {
           role="status"
           aria-hidden="true"
         />
-        Loading users...
+        Loading data...
       </div>
     ) : (
-      <Pagination className="justify-content-end">{pages}</Pagination>
+      <span>Search...</span>
     );
 
     return (
@@ -97,16 +82,27 @@ class TodoApp extends Component<ITodoAppProps> {
             onClick={this.addTodoClicked}
             disabled={this.props.isFetchingTodos}
           >
-            {buttonContent}
+            {addButtonContent}
+          </Button>
+          <Button
+            variant="outline-light"
+            onClick={this.searchTodoClicked}
+            disabled={this.props.isFetchingUsers}
+            style={{ marginLeft: "15px" }}
+          >
+            {searchButtonContent}
           </Button>
         </Navbar>
-        {navbarContent}
+        <div>
+          Found <b>{this.props.todoCount}</b> items, showing{" "}
+          <b>{this.props.todos.length}</b>
+        </div>
         <Table striped bordered hover>
           <thead>
             <tr>
               <th>User</th>
-              <th>#</th>
-              <th>Task</th>
+              <th>Id</th>
+              <th>Content</th>
               <th>Done</th>
               <th>Delete</th>
             </tr>
@@ -114,20 +110,19 @@ class TodoApp extends Component<ITodoAppProps> {
           <tbody>{todoItems}</tbody>
         </Table>
         <AddTodoModal />
+        <SearchTodoModal />
       </div>
     );
   }
 
   private addTodoClicked = () => this.props.dispatch(showAddTodoModal());
 
-  private selectPage(selected: number) {
-    this.props.dispatch(selectUser(selected));
-  }
-
   private onTodoModified = (todo: ITodo) =>
     this.props.dispatch(modifyTodo(todo));
 
   private onTodoDeleted = (id: string) => this.props.dispatch(deleteTodo(id));
+
+  private searchTodoClicked = () => this.props.dispatch(showSearchTodoModal());
 }
 
 const mapStateToProps = (store: ITodoState) => store;

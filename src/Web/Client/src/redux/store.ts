@@ -12,5 +12,5 @@ export const store = createStore(
   )
 );
 
-store.dispatch(fetchTodos());
+store.dispatch(fetchTodos(undefined, undefined));
 store.dispatch(fetchUsers());

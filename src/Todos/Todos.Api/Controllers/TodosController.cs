@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Todos.Dal;
 
@@ -19,24 +18,31 @@ namespace Todos.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IReadOnlyList<TodoItem>> Get()
+        public async Task<SearchTodoResult> Search([FromQuery] int? userId = null, [FromQuery] string searchExpression = null)
         {
-            var cachedResult = await cache.TryGet();
-            if (cachedResult != null)
-            {
-                return cachedResult;
-            }
-            else
-            {
-                var result = await repository.ListAll();
-                await cache.Set(result);
-                return result;
-            }
+            var result = await repository.Search(userId, searchExpression);
+
+            foreach (var todoItem in result.Items)
+                await cache.Set(todoItem);
+
+            return result;
         }
 
         [HttpGet("{id}")]
-        public Task<TodoItem> Get(string id)
-            => repository.FindById(id);
+        public async Task<TodoItem> Get(string id)
+        {
+            var cachedValue = await cache.TryGet(id);
+            if (cachedValue != null)
+            {
+                return cachedValue;
+            }
+            else
+            {
+                var value = await repository.FindById(id);
+                await cache.Set(value);
+                return value;
+            }
+        }
 
         [HttpPost]
         [ProducesResponseType(200)]
@@ -44,7 +50,6 @@ namespace Todos.Api.Controllers
         public async Task<ActionResult<TodoItem>> Post([FromBody] CreateNewTodoRequest value)
         {
             var result = await repository.Insert(value);
-            await cache.Invalidate();
             return CreatedAtAction(nameof(Get), result);
         }
 
@@ -56,7 +61,7 @@ namespace Todos.Api.Controllers
             var result = await repository.Update(id, value);
             if (result != null)
             {
-                await cache.Invalidate();
+                await cache.Invalidate(id);
                 return AcceptedAtAction(nameof(Get), result);
             }
             else
@@ -73,7 +78,7 @@ namespace Todos.Api.Controllers
             var deleted = await repository.Delete(id);
             if (deleted)
             {
-                await cache.Invalidate();
+                await cache.Invalidate(id);
                 return Ok();
             }
             else

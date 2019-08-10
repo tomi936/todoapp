@@ -16,7 +16,6 @@
         public static Entities.TodoItemChanges ToDal(this EditTodoRequest value)
             => new Entities.TodoItemChanges()
             {
-                Title = value.Title,
                 Completed = value.Completed
             };
     }

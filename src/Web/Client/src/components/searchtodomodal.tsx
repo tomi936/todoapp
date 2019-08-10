@@ -5,59 +5,64 @@ import { FormControlProps } from "react-bootstrap/FormControl";
 import Modal from "react-bootstrap/Modal";
 import { connect } from "react-redux";
 import { ThunkDispatch } from "redux-thunk";
-import { ITodo } from "../model/todo";
 import {
-  closeAddTodoModal,
+  closeSearchTodoModal,
   ITodoAction,
-  postTodo,
-  updatePendingTodo
+  updatePendingSearch,
+  fetchTodos
 } from "../redux/actions";
 import { ITodoState } from "../redux/reducer";
 import { IUser } from "../model/user";
 
-interface IAddTodoModalProps {
+interface ISearchTodoModalProps {
   show: boolean;
-  todo: ITodo;
   users: IUser[];
+  searchUserId: number | undefined;
+  searchText: string;
   dispatch: ThunkDispatch<ITodoState, undefined, ITodoAction>;
 }
 
-class AddTodoModal extends Component<IAddTodoModalProps> {
+class SearchTodoModal extends Component<ISearchTodoModalProps> {
   public render() {
-    const userOptions = this.props.users.map(u => (
-      <option key={u.id}>{u.name}</option>
-    ));
+    const users = this.props.users;
+
+    var userItems =
+      users && users.map(u => <option key={u.id}>{u.name}</option>);
+    if (userItems) {
+      userItems.push(<option key={-1}>any</option>);
+    }
 
     return (
       <Modal show={this.props.show} onHide={this.handleClose}>
         <Modal.Header closeButton>
-          <Modal.Title>Add new Todo</Modal.Title>
+          <Modal.Title>Search</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
-            <Form.Group controlId="formUserId">
+            <Form.Group controlId="searchFormUserId">
               <Form.Label>User</Form.Label>
               <Form.Control
                 as="select"
                 value={
-                  this.props.users[this.props.todo.userId - 1] &&
-                  this.props.users[this.props.todo.userId - 1].name
+                  (this.props.searchUserId &&
+                    this.props.users[this.props.searchUserId - 1].name) ||
+                  "any"
                 }
                 onChange={(e: React.FormEvent<EventTarget>) =>
                   this.handleUserIdChange((event && event.target) || null)
                 }
               >
-                {userOptions}
+                {userItems}
               </Form.Control>
             </Form.Group>
-            <Form.Group controlId="formTodoTitle">
-              <Form.Label>Task</Form.Label>
+            <Form.Group controlId="searchFormTodoText">
+              <Form.Label>Text</Form.Label>
               <Form.Control
                 type="input"
-                placeholder="Describe the task that should be done."
-                value={this.props.todo.title}
+                placeholder="Text description to search for."
+                value={this.props.searchText}
                 onChange={(e: React.FormEvent<FormControlProps>) =>
-                  this.handleTitleChange((event && event.target) || null)
+                  this.handleTextChange((event && event.target) || null)
                 }
               />
             </Form.Group>
@@ -67,17 +72,20 @@ class AddTodoModal extends Component<IAddTodoModalProps> {
           <Button variant="secondary" onClick={this.handleClose}>
             Close
           </Button>
-          <Button variant="primary" onClick={this.handleSave}>
-            Create
+          <Button variant="primary" onClick={this.handleSearch}>
+            Search
           </Button>
         </Modal.Footer>
       </Modal>
     );
   }
 
-  private handleClose = () => this.props.dispatch(closeAddTodoModal());
+  private handleClose = () => this.props.dispatch(closeSearchTodoModal());
 
-  private handleSave = () => this.props.dispatch(postTodo(this.props.todo));
+  private handleSearch = () =>
+    this.props.dispatch(
+      fetchTodos(this.props.searchUserId, this.props.searchText)
+    );
 
   private handleUserIdChange(target: EventTarget | null) {
     if (!target) {
@@ -85,30 +93,34 @@ class AddTodoModal extends Component<IAddTodoModalProps> {
     }
 
     const inputElement = target as HTMLSelectElement;
+
+    const actualSelectedUser =
+      inputElement.value == "any"
+        ? undefined
+        : Number(this.props.users[inputElement.selectedIndex].id);
+
     this.props.dispatch(
-      updatePendingTodo(
-        Number(this.props.users[inputElement.selectedIndex].id),
-        this.props.todo.title
-      )
+      updatePendingSearch(actualSelectedUser, this.props.searchText)
     );
   }
 
-  private handleTitleChange(target: EventTarget | null) {
+  private handleTextChange(target: EventTarget | null) {
     if (!target) {
       return;
     }
 
     const inputElement = target as HTMLInputElement;
     this.props.dispatch(
-      updatePendingTodo(this.props.todo.userId, inputElement.value)
+      updatePendingSearch(this.props.searchUserId, inputElement.value)
     );
   }
 }
 
 const mapStateToProps = (store: ITodoState) => ({
-  show: store.showAddTodoModal,
-  todo: store.pendingTodo,
-  users: store.users
+  show: store.showSearchTodoModal,
+  users: store.users,
+  searchUserId: store.searchUserId,
+  searchText: store.searchText
 });
 
-export default connect(mapStateToProps)(AddTodoModal);
+export default connect(mapStateToProps)(SearchTodoModal);
