@@ -1,6 +1,6 @@
-﻿using System;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Nest;
+using System;
 using Todos.Dal;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -21,7 +21,7 @@ namespace Microsoft.Extensions.DependencyInjection
             return new ConnectionSettings(new Uri(esUrl))
                 .ThrowExceptions()
                 .DefaultMappingFor<Todos.Dal.Entities.TodoItem>(
-                    m => m.IndexName("todos"));
+                    m => m.IndexName("todos")); // configures the index name, which is like the table/database name
         }
     }
 }

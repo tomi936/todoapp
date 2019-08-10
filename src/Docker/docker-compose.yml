@@ -4,8 +4,8 @@ services:
   apigateway:
     image: traefik:v1.7.12
     ports:
-      - "5080:80"
-      - "5088:8080"
+      - "5080:80" # Port of the API Gaetway, which will be the port behind which the system will be published
+      - "5088:8080" # Dashboard of Traefik for troubleshooting
     command:
       - --api
       - --docker
@@ -18,18 +18,17 @@ services:
   todos:
     image: "${REGISTRY_URL:-todoapp}/todos:${IMAGE_TAG:-latest}"
     build:
-      context: ..
-      dockerfile: Todos/Todos.Api/Dockerfile
-    networks:
+      context: .. # Parent directory, since this file is under the 'Docker' subfolder; every path in every Dockerfile is relative to this
+      dockerfile: Todos/Todos.Api/Dockerfile # The Dockerfile to build; path is relative to the context, which is the solution root
+    networks: # All microservices are connected by this private Docker network, which also provides DNS
       - todoapp-network
     labels:
-      - "traefik.enable=true"
-      - "traefik.backend=todos"
-      - "traefik.port=80"
+      - "traefik.enable=true" # Enable publishing this service by Traefik
+      - "traefik.backend=todos" # Name of the backend (displayed in the Dashboard)
+      - "traefik.port=80" # Which port and protocol the backend is using
       - "traefik.protocol=http"
-      - "traefik.frontend.passHostHeader=true"
-      - "traefik.frontend.rule=PathPrefix:/api/todos"
-      - "traefik.frontend.auth.forward.address=http://users/api/auth"
+      - "traefik.frontend.rule=PathPrefix:/api/todos" # Routing rule
+      - "traefik.frontend.auth.forward.address=http://users/api/auth" # Forward authentication (note the address, the 'users' is the name of the service)
 
   web:
     image: "${REGISTRY_URL:-todoapp}/web:${IMAGE_TAG:-latest}"
@@ -57,8 +56,8 @@ services:
       - "traefik.backend=users"
       - "traefik.port=80"
       - "traefik.protocol=http"
-      - "traefik.auth.frontend.rule=PathPrefix:/api/auth"
-      - "traefik.api.frontend.rule=PathPrefix:/api/users"
+      - "traefik.auth.frontend.rule=PathPrefix:/api/auth" # Two routing rules are defined: this one, for the authentication, can be called by anyone
+      - "traefik.api.frontend.rule=PathPrefix:/api/users" # This other rule works on a different url scheme, and requires authentication
       - "traefik.api.frontend.auth.forward.address=http://users/api/auth"
 
   mongodb:
@@ -76,7 +75,7 @@ services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.3.0
     environment:
-      - cluster.name=elasticsearch
+      - cluster.name=elasticsearch # Settings to start Elasticsearch in a single-node development environment
       - node.name=elasticsearch
       - discovery.type=single-node
       - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
@@ -85,7 +84,7 @@ services:
     networks:
       - todoapp-network
 
-volumes:
+volumes: # The volumes will store the database data; kept even after the containers are deleted
   todoapp-mongo-data:
     driver: local
   todoapp-elastic-data:

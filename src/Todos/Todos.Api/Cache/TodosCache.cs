@@ -4,6 +4,9 @@ using System.Threading.Tasks;
 
 namespace Todos.Api.Cache
 {
+    /// <summary>
+    /// Caches individual todo items by their id.
+    /// </summary>
     public class TodosCache
     {
         private readonly IDistributedCache cache;
@@ -12,9 +15,12 @@ namespace Todos.Api.Cache
         public TodosCache(IDistributedCache cache)
         {
             this.cache = cache;
+
+            // Every cache entry exires in 1 minute
+            // - Keeps the memory pressure of Redis low
+            // - A sort of "eventually consistency": if the cache is out of date, it will expire soon.
             this.cacheEntryOptions = new DistributedCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromMinutes(1));
         }
-
 
         public async Task<TodoItem> TryGet(string todoItemId)
         {
@@ -27,7 +33,7 @@ namespace Todos.Api.Cache
 
         public async Task Set(TodoItem value)
         {
-            var valueAsString = Newtonsoft.Json.JsonConvert.SerializeObject(value);
+            var valueAsString = Newtonsoft.Json.JsonConvert.SerializeObject(value); // the cache can only store byte[] or string, hence the manual serialization
             await cache.SetStringAsync(key: getCacheKey(value.Id), value: valueAsString, options: cacheEntryOptions);
         }
 

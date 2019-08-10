@@ -4,12 +4,19 @@ from pymongo import MongoClient
 import os
 import socket
 
+# Development and production behavior might vary; decide runtime
+is_development = os.environ.get('TODOAPP_IsDevelopment') is not None
+
+# Get connection string from environment variable
 mongo_url = os.getenv('TODOAPP_MongoUrl', 'mongodb://mongodb:27017')
 mongo = MongoClient(mongo_url)
 
 app = Flask(__name__)
-cors = CORS(app)
-app.config['CORS_HEADERS'] = 'Content-Type'
+
+if is_development:
+    # Allow CORS; makes frontend development easier; must not be used in production
+    cors = CORS(app)
+    app.config['CORS_HEADERS'] = 'Content-Type'
 
 # List all users
 @app.route("/api/users")
@@ -45,10 +52,11 @@ def get_is_auth():
 if __name__ == "__main__":
 
     # Add sample data
-    users_collection = mongo.todoapp.users
-    users_collection.replace_one({'id': 1}, {'id': 1, 'name': 'Alma'}, True)
-    users_collection.replace_one({'id': 2}, {'id': 2, 'name': 'Banan'}, True)
-    users_collection.replace_one({'id': 3}, {'id': 3, 'name': 'Citrom'}, True)
+    if is_development:
+        users_collection = mongo.todoapp.users
+        users_collection.replace_one({'id': 1}, {'id': 1, 'name': 'Alma'}, True)
+        users_collection.replace_one({'id': 2}, {'id': 2, 'name': 'Banan'}, True)
+        users_collection.replace_one({'id': 3}, {'id': 3, 'name': 'Citrom'}, True)
 
     # Start the Flash host
     app.run(host='0.0.0.0', port=80)

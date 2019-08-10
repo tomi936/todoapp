@@ -15,33 +15,33 @@ namespace Todos.Dal
 
         public async Task<SearchTodoResult> Search(int? userId = null, string searchExpression = null)
         {
+            // The query description is somewhat unconvential in NEST.
+            // - The syntax is Fluent, follows how Elasticsearch thinks.
+            // - Combining multiple search criteria must be done with && operator (or ||).
+            // - Size limits the maximum of items returned. This is a must with Elasticsearch. If unspecified, default is 10.
+
             var result = await elasticClient
                                 .SearchAsync<Entities.TodoItem>(searchDescriptor =>
                                     searchDescriptor
-                                    .Query(queryDescriptor => filterForUserId(userId, queryDescriptor) && filterForText(searchExpression, queryDescriptor))
+                                    .Query(queryDescriptor => filterForUserId(userId, queryDescriptor) && filterForText(searchExpression, queryDescriptor)) // filtering
+                                    .Sort(sortDescriptor => sortDescriptor.Descending(SortSpecialField.Score)) // sort by text search relevance
                                     .Size(5));
 
             return new SearchTodoResult(
-                items: result.Hits.Select(i => i.Source.ToDomain(i.Id)).ToList(),
-                count: result.Total
+                items: result.Hits.Select(i => i.Source.ToDomain(i.Id)).ToList(), // The id property comes from Elasticsearch' hit object; see link in the description of the entity class TodoItem
+                count: result.Total // Although only the first few items are returned, Elasticsearch tells us how many are there in total
                 );
         }
 
         private static QueryContainer filterForText(string searchExpression, QueryContainerDescriptor<Entities.TodoItem> queryDescriptor)
-        {
-            if (string.IsNullOrEmpty(searchExpression))
-                return queryDescriptor.MatchAll();
-            else
-                return queryDescriptor.Match(match => match.Field(f => f.Title).Query(searchExpression));
-        }
+            => string.IsNullOrEmpty(searchExpression)
+                ? queryDescriptor.MatchAll()
+                : queryDescriptor.Match(match => match.Field(f => f.Title).Query(searchExpression)); //  Match query will look for similar texts (full text search)
 
         private static QueryContainer filterForUserId(int? userId, QueryContainerDescriptor<Entities.TodoItem> queryDescriptor)
-        {
-            if (userId == null)
-                return queryDescriptor.MatchAll();
-            else
-                return queryDescriptor.Term(term => term.Field(f => f.UserId).Value(userId.Value));
-        }
+            => userId == null
+                ? queryDescriptor.MatchAll()
+                : queryDescriptor.Term(term => term.Field(f => f.UserId).Value(userId.Value)); // a Term query will look for eact match
 
         public async Task<TodoItem> FindById(string id)
         {

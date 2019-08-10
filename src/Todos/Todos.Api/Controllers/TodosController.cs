@@ -4,6 +4,9 @@ using Todos.Dal;
 
 namespace Todos.Api.Controllers
 {
+    /// <summary>
+    /// Handles all requests sent to /api/todos
+    /// </summary>
     [Route("api/todos")]
     [ApiController]
     public class TodosController : ControllerBase

@@ -1,8 +1,10 @@
 ﻿namespace Todos.Dal.Entities
 {
+    /// <summary>
+    /// Partial document update. Contains only properties that must be changed.
+    /// </summary>
     internal class TodoItemChanges
     {
-        public string Title { get; set; }
         public bool Completed { get; set; }
     }
 }

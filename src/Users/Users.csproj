@@ -11,6 +11,11 @@
   <ItemGroup>
     <!-- We want to build the projects if the source files change -->
     <PyInputs Include="$(ProjectDir)src\**" />
+    <Compile Remove="Docker\obj\**" />
+    <EmbeddedResource Remove="Docker\obj\**" />
+    <None Remove="Docker\obj\**" />
+    <None Remove=".ensurebuild" />
+    <None Remove=".gitignore" />
 
     <!-- Dummy build result file -->
     <PyOutputs Include="$(ProjectDir).ensurebuild" />
