@@ -1,7 +1,7 @@
 import { applyMiddleware, createStore } from "redux";
 import logger from "redux-logger";
 import thunkMiddleware, { ThunkMiddleware } from "redux-thunk";
-import { fetchTodos, ITodoAction } from "./actions";
+import { fetchTodos, ITodoAction, fetchUsers } from "./actions";
 import { ITodoState, todos } from "./reducer";
 
 export const store = createStore(
@@ -13,3 +13,4 @@ export const store = createStore(
 );
 
 store.dispatch(fetchTodos());
+store.dispatch(fetchUsers());

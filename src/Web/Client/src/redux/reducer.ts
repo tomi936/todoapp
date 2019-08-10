@@ -5,6 +5,8 @@ import {
   ITodoAction,
   RECEIVE_TODOS,
   REQUEST_TODOS,
+  RECEIVE_USERS,
+  REQUEST_USERS,
   SELECT_USER,
   SHOW_ADD_TODO_MODAL,
   START_POST_TODO,
@@ -13,11 +15,14 @@ import {
   END_MODIFY_TODO,
   END_DELETE_TODO
 } from "./actions";
+import { IUser } from "../model/user";
 
 export interface ITodoState {
-  isFetching: boolean;
+  isFetchingTodos: boolean;
+  isFetchingUsers: boolean;
   lastUpdated: Date;
   todos: ITodo[];
+  users: IUser[];
   selectedUser: number;
   showAddTodoModal: boolean;
   pendingTodo: ITodo;
@@ -33,25 +38,39 @@ const emptyPendingTodo = {
 };
 
 const initialState = {
-  isFetching: false,
+  isFetchingTodos: false,
+  isFetchingUsers: false,
   lastUpdated: new Date(0),
   pendingTodo: emptyPendingTodo,
   selectedUser: 1,
   showAddTodoModal: false,
-  todos: []
+  todos: [],
+  users: []
 };
 
 export function todos(state: ITodoState = initialState, action: ITodoAction) {
   switch (action.type) {
+    case REQUEST_USERS:
+      return {
+        ...state,
+        isFetchingUsers: true
+      };
+    case RECEIVE_USERS:
+      return {
+        ...state,
+        isFetchingUsers: false,
+        lastUpdated: action.receivedAt,
+        users: action.users
+      };
     case REQUEST_TODOS:
       return {
         ...state,
-        isFetching: true
+        isFetchingTodos: true
       };
     case RECEIVE_TODOS:
       return {
         ...state,
-        isFetching: false,
+        isFetchingTodos: false,
         lastUpdated: action.receivedAt,
         todos: action.todos
       };
@@ -77,13 +96,13 @@ export function todos(state: ITodoState = initialState, action: ITodoAction) {
     case START_POST_TODO:
       return {
         ...state,
-        isFetching: true,
+        isFetchingTodos: true,
         showAddTodoModal: false
       };
     case END_POST_TODO:
       return {
         ...state,
-        isFetching: false,
+        isFetchingTodos: false,
         pendingTodo: {
           ...emptyPendingTodo,
           userId: state.selectedUser

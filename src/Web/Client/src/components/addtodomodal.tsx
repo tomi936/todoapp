@@ -22,7 +22,7 @@ interface IAddTodoModalProps {
 
 class AddTodoModal extends Component<IAddTodoModalProps> {
   public render() {
-    const userOptions = new Array(10)
+    const userOptions = new Array(3)
       .fill(0)
       .map((_, index) => <option key={index}>{index + 1}</option>);
 

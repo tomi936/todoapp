@@ -17,10 +17,13 @@ import {
 import { ITodoState } from "../redux/reducer";
 import AddTodoModal from "./addtodomodal";
 import { TodoRow } from "./todorow";
+import { IUser } from "../model/user";
 
 interface ITodoAppProps {
-  isFetching: boolean;
+  isFetchingTodos: boolean;
+  isFetchingUsers: boolean;
   todos: ITodo[];
+  users: IUser[];
   selectedUser: number;
   dispatch: ThunkDispatch<ITodoState, undefined, ITodoAction>;
 }
@@ -41,7 +44,21 @@ class TodoApp extends Component<ITodoAppProps> {
       />
     ));
 
-    const buttonContent = this.props.isFetching ? (
+    const users = this.props.users;
+
+    const pages =
+      users &&
+      users.map(user => (
+        <Pagination.Item
+          key={user.id}
+          active={user.id === this.props.selectedUser}
+          onClick={() => this.selectPage(user.id)}
+        >
+          {user.name}
+        </Pagination.Item>
+      ));
+
+    const buttonContent = this.props.isFetchingTodos ? (
       <div>
         <Spinner
           as="span"
@@ -50,21 +67,26 @@ class TodoApp extends Component<ITodoAppProps> {
           role="status"
           aria-hidden="true"
         />
-        Loading...
+        Loading todos...
       </div>
     ) : (
       <span>Add new Todo</span>
     );
 
-    const pages = new Array(10).fill(null).map((_, index) => (
-      <Pagination.Item
-        key={index}
-        active={index + 1 === this.props.selectedUser}
-        onClick={() => this.selectPage(index + 1)}
-      >
-        {index + 1}
-      </Pagination.Item>
-    ));
+    const navbarContent = this.props.isFetchingUsers ? (
+      <div>
+        <Spinner
+          as="span"
+          animation="grow"
+          size="sm"
+          role="status"
+          aria-hidden="true"
+        />
+        Loading users...
+      </div>
+    ) : (
+      <Pagination className="justify-content-end">{pages}</Pagination>
+    );
 
     return (
       <div>
@@ -73,12 +95,12 @@ class TodoApp extends Component<ITodoAppProps> {
           <Button
             variant="outline-light"
             onClick={this.addTodoClicked}
-            disabled={this.props.isFetching}
+            disabled={this.props.isFetchingTodos}
           >
             {buttonContent}
           </Button>
         </Navbar>
-        <Pagination className="justify-content-end">{pages}</Pagination>
+        {navbarContent}
         <Table striped bordered hover>
           <thead>
             <tr>

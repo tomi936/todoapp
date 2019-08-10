@@ -1,6 +1,31 @@
 import fetch from "cross-fetch";
 import { Dispatch } from "react";
 import { ITodo } from "../model/todo";
+import { IUser } from "../model/user";
+
+export const REQUEST_USERS = "REQUEST_USERS";
+function requestUsers(): IRequestUsersAction {
+  return {
+    type: REQUEST_USERS
+  };
+}
+interface IRequestUsersAction {
+  type: typeof REQUEST_USERS;
+}
+
+export const RECEIVE_USERS = "RECEIVE_USERS";
+function receiveUsers(users: IUser[]): IReceiveUserAction {
+  return {
+    receivedAt: new Date(),
+    users,
+    type: RECEIVE_USERS
+  };
+}
+interface IReceiveUserAction {
+  type: typeof RECEIVE_USERS;
+  users: IUser[];
+  receivedAt: Date;
+}
 
 export const REQUEST_TODOS = "REQUEST_TODOS";
 function requestTodos(): IRequestTodosAction {
@@ -134,6 +159,8 @@ interface IEndDeleteTodoAction {
 }
 
 export type ITodoAction =
+  | IRequestUsersAction
+  | IReceiveUserAction
   | IRequestTodosAction
   | IReceiveTodoAction
   | IShowAddTodoModalAction
@@ -149,6 +176,41 @@ export type ITodoAction =
 // Meet our first thunk action creator!
 // Though its insides are different, you would use it just like any other action creator:
 // store.dispatch(fetchPosts('reactjs'))
+
+export function fetchUsers() {
+  // Thunk middleware knows how to handle functions.
+  // It passes the dispatch method as an argument to the function,
+  // thus making it able to dispatch actions itself.
+
+  return (dispatch: Dispatch<ITodoAction>) => {
+    // First dispatch: the app state is updated to inform
+    // that the API call is starting.
+
+    dispatch(requestUsers());
+
+    // The function called by the thunk middleware can return a value,
+    // that is passed on as the return value of the dispatch method.
+
+    // In this case, we return a promise to wait for.
+    // This is not required by thunk middleware, but it is convenient for us.
+
+    return fetch(`/api/users`)
+      .then(
+        response => response.json(),
+        // Do not use catch, because that will also catch
+        // any errors in the dispatch and resulting render,
+        // causing a loop of 'Unexpected batch number' errors.
+        // https://github.com/facebook/react/issues/6895
+        error => console.log("An error occurred.", error)
+      )
+      .then(json =>
+        // We can dispatch many times!
+        // Here, we update the app state with the results of the API call.
+
+        dispatch(receiveUsers(json))
+      );
+  };
+}
 
 export function fetchTodos() {
   // Thunk middleware knows how to handle functions.
@@ -189,7 +251,7 @@ export function postTodo(todo: ITodo) {
   return (dispatch: Dispatch<ITodoAction>) => {
     dispatch(startPostTodo());
 
-    return fetch("api/todos", {
+    return fetch("/api/todos", {
       body: JSON.stringify(todo),
       headers: {
         "Content-type": "application/json; charset=UTF-8"
