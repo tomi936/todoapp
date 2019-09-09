@@ -28,6 +28,9 @@ namespace Todos.Api
             // adds the caching related components
             services.AddTodosCache(this.Configuration);
 
+            // adds background service for handling deleted users
+            services.AddUsersDeleteService(this.Configuration);
+
             // only when run in debug mode: prefills the database with sample data
             if (HostingEnvironment.IsDevelopment())
                 services.AddHostedService<TestDataProvider>();

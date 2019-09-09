@@ -27,6 +27,7 @@ services:
     image: todoapp/users:dev # When debugging, use the image build by the related csproj
     environment:
       - TODOAPP_MongoUrl=mongodb://mongodb:27017
+      - TODOAPP_RedisUrl=redis
       - TODOAPP_IsDevelopment=true
 
   mongodb:

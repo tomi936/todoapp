@@ -1,5 +1,5 @@
-﻿using Nest;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using Nest;
 
 namespace Todos.Dal
 {
@@ -54,6 +54,12 @@ namespace Todos.Dal
         {
             var result = await elasticClient.DeleteAsync<Entities.TodoItem>(id);
             return result.Result == Result.Deleted;
+        }
+
+        public Task DeleteAllOfUser(int userId)
+        {
+            // TODO 5. feladat
+            return Task.CompletedTask;
         }
     }
 }

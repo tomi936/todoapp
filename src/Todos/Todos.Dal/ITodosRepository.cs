@@ -9,5 +9,6 @@ namespace Todos.Dal
         Task<TodoItem> Insert(CreateNewTodoRequest value);
         Task<TodoItem> Update(string id, EditTodoRequest value);
         Task<bool> Delete(string id);
+        Task DeleteAllOfUser(int userId);
     }
 }
